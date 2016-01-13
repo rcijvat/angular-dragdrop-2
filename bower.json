@@ -1,0 +1,17 @@
+{
+  "name": "angular-dragdrop-2",
+  "authors": [
+    "R. Cijvat <robin.cijvat@monetdbsolutions.com>"
+  ],
+  "description": "Straightforward but effective drag and drop library, tightly integrated with Angular.",
+  "main": "dragdrop.js",
+  "moduleType": [],
+  "keywords": [
+    "drag",
+    "drop",
+    "dragdrop",
+    "angular"
+  ],
+  "license": "MIT",
+  "homepage": ""
+}
