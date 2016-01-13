@@ -12,6 +12,10 @@
     "dragdrop",
     "angular"
   ],
+  "dependencies": {
+    "lodash": "latest"
+  },
+  "ignore": {},
   "license": "MIT",
   "homepage": ""
 }

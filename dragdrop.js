@@ -26,7 +26,7 @@
 //   * toContainerData       [any]    The data that was passed to the container where the element ended up
 //   * toContainerIndex      [int]    The new index of the element in its new container
 
-angular.module("dragdrop", ["lodash"])
+angular.module("dragdrop", [])
 
     // define a provider that can be used to change default behavior of the dragdrop module
 
@@ -57,8 +57,8 @@ angular.module("dragdrop", ["lodash"])
     })
 
     // Defines constructor for Drag object, which manages all drag related things for a specific drag type
-    .factory("Drag", ["$rootScope", "$window", "$document", "$timeout", "_", "dragdropConfig",
-            function($rootScope, $window, $document, $timeout, _, dragdropConfig) {
+    .factory("Drag", ["$rootScope", "$window", "$document", "$timeout", "dragdropConfig",
+            function($rootScope, $window, $document, $timeout, dragdropConfig) {
         function docRelPos(clientCoords) {
             return [clientCoords[0] + $window.scrollX, clientCoords[1] + $window.scrollY];
         }
@@ -429,7 +429,7 @@ angular.module("dragdrop", ["lodash"])
     }])
 
     // When a drag element is dropped in a dragContainer, the element will be placed in this container.
-    .directive("dragContainer", ["_", "dragStore", "Drag", function(_, dragStore, Drag) {
+    .directive("dragContainer", ["dragStore", "Drag", function(dragStore, Drag) {
         return {
             scope: {
                 type: "@dragContainer",
