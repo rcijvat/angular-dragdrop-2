@@ -18,7 +18,8 @@
 // - dragdrop:dragEnd (whenever drag ends)
 //   * type                  [string] The type of the drag operation, as passed to the directives that make up this drag
 //
-// - dragdrop:elementMoved (whenever an element gets dragged from one position to another
+// - dragdrop:elementMoved (whenever an element gets dragged from one position to another; not triggered if element gets
+//                          dragged to the position it started)
 //   * type                  [string] The type of the drag operation, as passed to the directives that make up this drag
 //   * elementData           [any]    The data that was passed to the dragElement directive
 //   * fromContainerData     [any]    The data that was passed to the container where the element started
@@ -149,6 +150,10 @@ angular.module("dragdrop", [])
             var _createGhost = function(elem) {
                 return angular.element(elem[0].cloneNode(false))
                     .css("position", null)
+                    .css("top", null)
+                    .css("left", null)
+                    .css("right", null)
+                    .css("bottom", null)
                     .css("border", "3px dashed #666")
                     .addClass("ghost");
             };
