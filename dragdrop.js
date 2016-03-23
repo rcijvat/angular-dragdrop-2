@@ -3,7 +3,7 @@
 // Some important notes:
 // - drag-container should have the drag-element directives as direct offspring, since otherwise we do not
 //   know where to append drag-element directives when drag-container is empty
-// - All events captured here are captures with the angular.element.bind method. Handling such events goes outside of
+// - All events captured here are captured with the angular.element.bind method. Handling such events goes outside of
 //   the Angular digest. Since we always do this, we know that we will always have to call $rootScope.$apply after
 //   we change some of the data provided to us.
 
@@ -18,8 +18,7 @@
 // - dragdrop:dragEnd (whenever drag ends)
 //   * type                  [string] The type of the drag operation, as passed to the directives that make up this drag
 //
-// - dragdrop:elementMoved (whenever an element gets dragged from one position to another; not triggered if element gets
-//                          dragged to the position it started)
+// - dragdrop:elementMoved (whenever an element gets dragged from one position to another
 //   * type                  [string] The type of the drag operation, as passed to the directives that make up this drag
 //   * elementData           [any]    The data that was passed to the dragElement directive
 //   * fromContainerData     [any]    The data that was passed to the container where the element started
@@ -59,312 +58,312 @@ angular.module("dragdrop", [])
 
     // Defines constructor for Drag object, which manages all drag related things for a specific drag type
     .factory("Drag", ["$rootScope", "$window", "$document", "$timeout", "dragdropConfig",
-            function($rootScope, $window, $document, $timeout, dragdropConfig) {
-        function docRelPos(clientCoords) {
-            return [clientCoords[0] + $window.scrollX, clientCoords[1] + $window.scrollY];
-        }
-
-        function rect(elem) {
-            var r = elem[0].getBoundingClientRect();
-            var p = docRelPos([r.left, r.top]);
-            return {
-                left: p[0],
-                top: p[1],
-                width: r.width,
-                height: r.height
-            };
-        }
-
-        function register(arr, elem) {
-            arr.push(elem);
-            return function() {
-                _.remove(arr, elem);
-            };
-        }
-
-        function containsX(r, point) {
-            return point[0] >= r.left && point[0] <= r.left + r.width;
-        }
-
-        function containsY(r, point) {
-            return point[1] >= r.top && point[1] <= r.top + r.height;
-        }
-
-        function contains(elem, point) {
-            var r = rect(elem);
-            return containsX(r, point) && containsY(r, point);
-        }
-
-        function closest(r1, r2, p) {
-            return _.min([
-                Math.abs(p - r1),
-                Math.abs(p - r2)
-            ]);
-        }
-
-        // The distance between an element and a point is defined as the smallest manhattan distance to
-        // one of the edges of the bounding rect, with a minimum of 0.
-        // We use the following logic:
-        // - We compute the distance separately for x and y
-        // - If a coordinate lies within the bounding rect, the distance for this dimension is 0
-        // - Otherwise, the distance is the minimum distance between the point and both edges in this dimension.
-        // - The total distance is the sum of the distance for X and Y
-        function distance(elem, point) {
-            var r = rect(elem);
-            var distX = containsX(r, point) ? 0 : closest(r.left, r.left + r.width , point[0]);
-            var distY = containsY(r, point) ? 0 : closest(r.top,  r.top  + r.height, point[1]);
-            return distX + distY;
-        }
-
-
-        // Takes Angular element and returns next Angular element with the attribute drag-element or data-drag-element set
-
-        function nextDragElement(dragElem) {
-            var next = angular.element(dragElem[0].nextSibling);
-            while(next[0] && !next.hasClass("drag-element")) {
-                next = angular.element(next[0].nextSibling);
+        function($rootScope, $window, $document, $timeout, dragdropConfig) {
+            function docRelPos(clientCoords) {
+                return [clientCoords[0] + $window.scrollX, clientCoords[1] + $window.scrollY];
             }
-            return _.isEmpty(next) ? [null] : next;
-        }
 
-        function Drag(type) {
-            var self = this;
+            function rect(elem) {
+                var r = elem[0].getBoundingClientRect();
+                var p = docRelPos([r.left, r.top]);
+                return {
+                    left: p[0],
+                    top: p[1],
+                    width: r.width,
+                    height: r.height
+                };
+            }
 
-            // private vars
-            var _type = type;
-            var _dragging = false;
-            var _dragElement = null; // Instance of Drag.Element; the currently dragged element
-            var _dragElem = null; // Angular element, clone of _dragElement.elem; used for dragging around
-            var _mousePos = null; // mouse position relative to the top left corner of the drag element
+            function register(arr, elem) {
+                arr.push(elem);
+                return function() {
+                    _.remove(arr, elem);
+                };
+            }
 
-            // private ghost vars
-            var _ghostContainer = null; // Drag.Container instance; the container containing the ghost element
-            var _ghost = null; // Angular element
+            function containsX(r, point) {
+                return point[0] >= r.left && point[0] <= r.left + r.width;
+            }
 
-            // private origin vars
-            var _sourceContainer = null;
-            var _sourceContainerIndex = 0;
+            function containsY(r, point) {
+                return point[1] >= r.top && point[1] <= r.top + r.height;
+            }
+
+            function contains(elem, point) {
+                var r = rect(elem);
+                return containsX(r, point) && containsY(r, point);
+            }
+
+            function closest(r1, r2, p) {
+                return _.min([
+                    Math.abs(p - r1),
+                    Math.abs(p - r2)
+                ]);
+            }
+
+            // The distance between an element and a point is defined as the smallest manhattan distance to
+            // one of the edges of the bounding rect, with a minimum of 0.
+            // We use the following logic:
+            // - We compute the distance separately for x and y
+            // - If a coordinate lies within the bounding rect, the distance for this dimension is 0
+            // - Otherwise, the distance is the minimum distance between the point and both edges in this dimension.
+            // - The total distance is the sum of the distance for X and Y
+            function distance(elem, point) {
+                var r = rect(elem);
+                var distX = containsX(r, point) ? 0 : closest(r.left, r.left + r.width , point[0]);
+                var distY = containsY(r, point) ? 0 : closest(r.top,  r.top  + r.height, point[1]);
+                return distX + distY;
+            }
 
 
-            // private functions
-            var _createGhost = function(elem) {
-                return angular.element(elem[0].cloneNode(false))
-                    .css("position", null)
-                    .css("top", null)
-                    .css("left", null)
-                    .css("right", null)
-                    .css("bottom", null)
-                    .css("border", "3px dashed #666")
-                    .addClass("ghost");
-            };
+            // Takes Angular element and returns next Angular element with the attribute drag-element or data-drag-element set
 
-            var _removeGhost = function() {
-                if(_ghost) {
-                    _ghost.remove();
-                    _ghost = null;
+            function nextDragElement(dragElem) {
+                var next = angular.element(dragElem[0].nextSibling);
+                while(next[0] && !next.hasClass("drag-element")) {
+                    next = angular.element(next[0].nextSibling);
                 }
-            };
+                return _.isEmpty(next) ? [null] : next;
+            }
 
-            var _getElementIndex = function(dragContainer, elem) {
-                var i = 0;
-                var prev = angular.element(elem[0].previousSibling);
-                while(!_.isEmpty(prev)) {
-                    if(prev.hasClass("drag-element")) {
-                        ++i;
+            function Drag(type) {
+                var self = this;
+
+                // private vars
+                var _type = type;
+                var _dragging = false;
+                var _dragElement = null; // Instance of Drag.Element; the currently dragged element
+                var _dragElem = null; // Angular element, clone of _dragElement.elem; used for dragging around
+                var _mousePos = null; // mouse position relative to the top left corner of the drag element
+
+                // private ghost vars
+                var _ghostContainer = null; // Drag.Container instance; the container containing the ghost element
+                var _ghost = null; // Angular element
+
+                // private origin vars
+                var _sourceContainer = null;
+                var _sourceContainerIndex = 0;
+
+
+                // private functions
+                var _createGhost = function(elem) {
+                    var bbox = elem[0].getBoundingClientRect();
+                    return angular.element(elem[0].cloneNode(false))
+                        .css("width", bbox.width+"px")
+                        .css("height", bbox.height+"px")
+                        .css("border", "3px dashed #666")
+                        .addClass("ghost");
+                };
+
+                var _removeGhost = function() {
+                    if(_ghost) {
+                        _ghost.remove();
+                        _ghost = null;
                     }
-                    prev = angular.element(prev[0].previousSibling);
-                }
-                return i;
-            };
+                };
 
-            var _removeElemFromContainer = function(dragContainer, dragElement) {
-                _.remove(dragContainer.data, dragElement.data);
-                $rootScope.$apply();
-            };
+                var _getElementIndex = function(dragContainer, elem) {
+                    var i = 0;
+                    var prev = angular.element(elem[0].previousSibling);
+                    while(!_.isEmpty(prev)) {
+                        if(prev.hasClass("drag-element")) {
+                            ++i;
+                        }
+                        prev = angular.element(prev[0].previousSibling);
+                    }
+                    return i;
+                };
 
-            var _addElemToContainer = function(dragContainer, dragElement, index) {
-                // First we will have to figure out the index
-                // We do this by starting at the ghost element, and walk back until the first element of the container
-                // using previousSibling, counting all .drag-element elements along the way
-                dragContainer.data.splice(index, 0, dragElement.data);
-                $rootScope.$apply();
-            };
+                var _removeElemFromContainer = function(dragContainer, dragElement) {
+                    _.remove(dragContainer.data, dragElement.data);
+                    $rootScope.$apply();
+                };
 
-
-            // public attributes
-            self.backgrounds = [];
-            self.containers = [];
-            self.elements = [];
-
-
-            // public methods
-            self.mouse = Drag.mouse;
-
-            // dragBackground should be instance of Drag.Background
-            self.registerBackground = function(dragBackground) {
-                return register(self.backgrounds, dragBackground);
-            };
-
-            // dragContainer should be instance of Drag.Container
-            self.registerContainer = function(dragContainer) {
-                return register(self.containers, dragContainer);
-            };
-
-            // dragElement should be instance of Drag.Element
-            self.registerElement = function(dragElement) {
-                return register(self.elements, dragElement);
-            };
-
-            self.dragging = function() {
-                return _dragging;
-            };
+                var _addElemToContainer = function(dragContainer, dragElement, index) {
+                    // First we will have to figure out the index
+                    // We do this by starting at the ghost element, and walk back until the first element of the container
+                    // using previousSibling, counting all .drag-element elements along the way
+                    dragContainer.data.splice(index, 0, dragElement.data);
+                    $rootScope.$apply();
+                };
 
 
-            self.start = function(startCoordsMouse, dragContainer, dragElement) {
-                if(_dragging) return;
-                $rootScope.$emit("dragdrop:dragStart", {type: _type});
+                // public attributes
+                self.backgrounds = [];
+                self.containers = [];
+                self.elements = [];
 
-                // start with setting some source info
-                _sourceContainer = dragContainer;
-                _sourceContainerIndex = _.findIndex(_sourceContainer.data, dragElement.data);
 
-                _dragElement = dragElement;
-                _dragElem = angular.element(_dragElement.elem[0].cloneNode(true));
+                // public methods
+                self.mouse = Drag.mouse;
 
-                var r = rect(_dragElement.elem);
-                _mousePos = [r.left - startCoordsMouse[0], r.top - startCoordsMouse[1]];
-                _dragElem.css({
-                    position: "absolute",
-                    left: r.left + "px",
-                    top: r.top + "px",
-                    width: r.width + "px",
-                    height: r.height + "px",
-                    opacity: .7
-                });
-                angular.element($document[0].body).append(_dragElem);
+                // dragBackground should be instance of Drag.Background
+                self.registerBackground = function(dragBackground) {
+                    return register(self.backgrounds, dragBackground);
+                };
 
-                // We have the clone appended to the body; now create a ghost element and insert it in the dom, right
-                // before the current dragElem
-                _ghost = _createGhost(_dragElem);
-                _ghostContainer = dragContainer;
-                dragContainer.elem[0].insertBefore(_ghost[0], _dragElement.elem[0]);
+                // dragContainer should be instance of Drag.Container
+                self.registerContainer = function(dragContainer) {
+                    return register(self.containers, dragContainer);
+                };
 
-                // Now we can safely remove the drag element from the drag container
-                _removeElemFromContainer(dragContainer, _dragElement);
+                // dragElement should be instance of Drag.Element
+                self.registerElement = function(dragElement) {
+                    return register(self.elements, dragElement);
+                };
 
-                _dragging = true;
-            };
+                self.dragging = function() {
+                    return _dragging;
+                };
 
-            self.drag = function(mouseCoords) {
-                if(!_dragging) return;
-                // Replace dragged element according to mouse cursor
-                _dragElem.css({
-                    left: mouseCoords[0] + _mousePos[0] + "px",
-                    top: mouseCoords[1] + _mousePos[1] + "px"
-                });
 
-                // See if there is a container on the current mouse position
-                var hoverContainer = _.find(self.containers, function(c) {
-                    return contains(c.elem, mouseCoords);
-                });
+                self.start = function(startCoordsMouse, dragContainer, dragElement) {
+                    if(_dragging) return;
+                    $rootScope.$emit("dragdrop:dragStart", {type: _type});
 
-                if(hoverContainer) {
-                    // The mouse is currently on a container.
-                    _ghostContainer = hoverContainer;
-                    // Get the element in this container with the smallest distance to the mouse
-                    var closestElt = _(self.elements).filter(function(el) {
-                        // only include elements inside the mouseover container
-                        return hoverContainer.elem[0].contains(el.elem[0]);
-                    }).min(function(elt) {
-                        // return container with minimum distance
-                        return distance(elt.elem, mouseCoords);
+                    // start with setting some source info
+                    _sourceContainer = dragContainer;
+                    _sourceContainerIndex = _.findIndex(_sourceContainer.data, dragElement.data);
+
+                    _dragElement = dragElement;
+                    _dragElem = angular.element(_dragElement.elem[0].cloneNode(true));
+
+                    var r = rect(_dragElement.elem);
+                    _mousePos = [r.left - startCoordsMouse[0], r.top - startCoordsMouse[1]];
+                    _dragElem.css({
+                        position: "fixed",
+                        left: r.left + "px",
+                        top: r.top + "px",
+                        width: r.width + "px",
+                        height: r.height + "px",
+                        opacity: .7
+                    });
+                    angular.element($document[0].body).append(_dragElem);
+
+                    // We have the clone appended to the body; now create a ghost element and insert it in the dom, right
+                    // before the current dragElem
+                    _ghost = _createGhost(_dragElement.elem);
+                    _ghostContainer = dragContainer;
+                    dragContainer.elem[0].insertBefore(_ghost[0], _dragElement.elem[0]);
+
+                    // Now we can safely remove the drag element from the drag container
+                    _removeElemFromContainer(dragContainer, _dragElement);
+
+                    _dragging = true;
+                };
+
+                self.drag = function(mouseCoords) {
+                    if(!_dragging) return;
+                    // Replace dragged element according to mouse cursor
+                    _dragElem.css({
+                        left: mouseCoords[0] + _mousePos[0] + "px",
+                        top: mouseCoords[1] + _mousePos[1] + "px"
                     });
 
-                    var elemAfterGhost = null;
-                    if(_.isObject(closestElt)) {
-                        // We have to determine whether we have to place the ghost before or after the closest elt.
+                    // See if there is a container on the current mouse position
+                    var hoverContainer = _.find(self.containers, function(c) {
+                        return contains(c.elem, mouseCoords);
+                    });
 
-                        // Either way, we will need the bounding rect of the closest elt
-                        var r = rect(closestElt.elem);
-
-                        // We need the horizontal option, since we want to know whether we have to look at
-                        // either the x or the y dimension.
-                        var midway;
-                        if(hoverContainer.horizontal) {
-                            // check x dimension
-                            midway = r.left + r.width / 2;
-                            elemAfterGhost = mouseCoords[0] < midway ?
-                                closestElt.elem :
-                                nextDragElement(closestElt.elem);
-                        } else {
-                            // check y dimension
-                            midway = r.top + r.height / 2;
-                            elemAfterGhost = mouseCoords[1] < midway ?
-                                closestElt.elem :
-                                nextDragElement(closestElt.elem);
-                        }
-                        // Use insertbefore to insert the ghost at the appropriate position.
-                        // Note: When elemAfterGhost turns out to be null (can be the case when nextSibling returned
-                        //       null), insertBefore will just insert at the end
-                        hoverContainer.elem[0].insertBefore(_ghost[0], elemAfterGhost[0]);
-                    } else {
-                        hoverContainer.elem.append(_ghost);
-                    }
-
-                }
-            };
-
-            self.end = function() {
-                if(!_dragging) return;
-                _dragElem.remove();
-                var i = _getElementIndex(_ghostContainer, _ghost);
-                _addElemToContainer(_ghostContainer, _dragElement, i);
-
-                $timeout(function() {
-                    _removeGhost();
-
-                    // emit event if something changed during this drag
-                    if(_sourceContainer !== _ghostContainer || _sourceContainerIndex !== i) {
-                        $rootScope.$emit("dragdrop:elementMoved", {
-                            type: _type,
-                            elementData: _dragElement.data,
-                            fromContainerData: _sourceContainer.data,
-                            fromContainerIndex: _sourceContainerIndex,
-                            toContainerData: _ghostContainer.data,
-                            toContainerIndex: i
+                    if(hoverContainer) {
+                        // The mouse is currently on a container.
+                        _ghostContainer = hoverContainer;
+                        // Get the element in this container with the smallest distance to the mouse
+                        var closestElt = _(self.elements).filter(function(el) {
+                            // only include elements inside the mouseover container
+                            return hoverContainer.elem[0].contains(el.elem[0]);
+                        }).min(function(elt) {
+                            // return container with minimum distance
+                            return distance(elt.elem, mouseCoords);
                         });
+
+                        var elemAfterGhost = null;
+                        if(_.isObject(closestElt)) {
+                            // We have to determine whether we have to place the ghost before or after the closest elt.
+                            _ghost[0].remove();
+                            _ghost = _createGhost(closestElt.elem);
+
+
+                            // Either way, we will need the bounding rect of the closest elt
+                            var r = rect(closestElt.elem);
+
+                            // We need the horizontal option, since we want to know whether we have to look at
+                            // either the x or the y dimension.
+                            var midway;
+                            if(hoverContainer.horizontal) {
+                                // check x dimension
+                                midway = r.left + r.width / 2;
+                                elemAfterGhost = mouseCoords[0] < midway ?
+                                    closestElt.elem :
+                                    nextDragElement(closestElt.elem);
+                            } else {
+                                // check y dimension
+                                midway = r.top + r.height / 2;
+                                elemAfterGhost = mouseCoords[1] < midway ?
+                                    closestElt.elem :
+                                    nextDragElement(closestElt.elem);
+                            }
+                            // Use insertbefore to insert the ghost at the appropriate position.
+                            // Note: When elemAfterGhost turns out to be null (can be the case when nextSibling returned
+                            //       null), insertBefore will just insert at the end
+                            hoverContainer.elem[0].insertBefore(_ghost[0], elemAfterGhost[0]);
+                        } else {
+                            hoverContainer.elem.append(_ghost);
+                        }
                     }
-                }, 0);
+                };
 
-                _dragging = false;
-                $rootScope.$emit("dragdrop:dragEnd", {type: _type});
-            };
-        }
+                self.end = function() {
+                    if(!_dragging) return;
+                    _dragElem.remove();
+                    var i = _getElementIndex(_ghostContainer, _ghost);
+                    _addElemToContainer(_ghostContainer, _dragElement, i);
 
-        Drag.mouse = function(event) {
-            if(!("pageX" in event) || !("pageY" in event)) {
-                return docRelPos([event.clientX, event.clientY]);
+                    $timeout(function() {
+                        _removeGhost();
+
+                        // emit event if something changed during this drag
+                        if(_sourceContainer !== _ghostContainer || _sourceContainerIndex !== i) {
+                            $rootScope.$emit("dragdrop:elementMoved", {
+                                type: _type,
+                                elementData: _dragElement.data,
+                                fromContainerData: _sourceContainer.data,
+                                fromContainerIndex: _sourceContainerIndex,
+                                toContainerData: _ghostContainer.data,
+                                toContainerIndex: i
+                            });
+                        }
+                    }, 0);
+
+                    _dragging = false;
+                    $rootScope.$emit("dragdrop:dragEnd", {type: _type});
+                };
             }
-            return [event.pageX, event.pageY];
-        };
 
-        Drag.Background = function(elem) {
-            this.elem = elem;
-        };
+            Drag.mouse = function(event) {
+                if(!("pageX" in event) || !("pageY" in event)) {
+                    return docRelPos([event.clientX, event.clientY]);
+                }
+                return [event.pageX, event.pageY];
+            };
 
-        Drag.Container = function(elem, data, horizontal) {
-            this.elem = elem;
-            this.data = data;
-            this.horizontal = _.isBoolean(horizontal) ? horizontal : dragdropConfig.horizontal;
-        };
+            Drag.Background = function(elem) {
+                this.elem = elem;
+            };
 
-        Drag.Element = function(elem, data) {
-            this.elem = elem;
-            this.data = data;
-        };
+            Drag.Container = function(elem, data, horizontal) {
+                this.elem = elem;
+                this.data = data;
+                this.horizontal = _.isBoolean(horizontal) ? horizontal : dragdropConfig.horizontal;
+            };
 
-        return Drag;
-    }])
+            Drag.Element = function(elem, data) {
+                this.elem = elem;
+                this.data = data;
+            };
+
+            return Drag;
+        }])
 
     .factory("dragStore", ["$document", "Drag", function($document, Drag) {
         var dragObjs = {};
