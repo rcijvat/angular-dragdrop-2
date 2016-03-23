@@ -13,7 +13,7 @@
     "angular"
   ],
   "dependencies": {
-    "lodash": "latest"
+    "lodash": "~4.6.1"
   },
   "ignore": {},
   "license": "MIT",
