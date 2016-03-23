@@ -190,18 +190,12 @@ angular.module("dragdrop", [])
 
 
                 // public attributes
-                self.backgrounds = [];
                 self.containers = [];
                 self.elements = [];
 
 
                 // public methods
                 self.mouse = Drag.mouse;
-
-                // dragBackground should be instance of Drag.Background
-                self.registerBackground = function(dragBackground) {
-                    return register(self.backgrounds, dragBackground);
-                };
 
                 // dragContainer should be instance of Drag.Container
                 self.registerContainer = function(dragContainer) {
@@ -355,10 +349,6 @@ angular.module("dragdrop", [])
                 return [event.pageX, event.pageY];
             };
 
-            Drag.Background = function(elem) {
-                this.elem = elem;
-            };
-
             Drag.Container = function(elem, data, horizontal, dropAllowed) {
                 this.elem = elem;
                 this.data = data;
@@ -424,21 +414,6 @@ angular.module("dragdrop", [])
 
         $document.bind("mousemove", mouseMove);
         $document.bind("mouseup", mouseUp);
-    }])
-
-
-    // When a drag element is dropped on a drag background, a new dragContainer element will be created containing
-    // only the dragged element.
-    .directive("dragBackground", ["dragStore", "Drag", function(dragStore, Drag) {
-        return {
-            link: function(scope, elem, attr) {
-                var type = attr.dragBackground;
-                var drag = dragStore(type);
-                var unregister = drag.registerBackground(new Drag.Background(elem));
-
-                scope.$on("$destroy", unregister);
-            }
-        };
     }])
 
     // When a drag element is dropped in a dragContainer, the element will be placed in this container.
