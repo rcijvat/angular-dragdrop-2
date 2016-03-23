@@ -42,7 +42,8 @@ angular.module("dragdrop", [])
 
     .provider("dragdropConfig", function() {
         var defaultOptions = {
-            horizontal: false
+            horizontal: false,
+            dropAllowed: true
         };
 
         var globalOptions = {};
@@ -232,6 +233,7 @@ angular.module("dragdrop", [])
                     _mousePos = [r.left - startCoordsMouse[0], r.top - startCoordsMouse[1]];
                     _dragElem.css({
                         position: "fixed",
+                        "z-index": 9999,
                         left: r.left + "px",
                         top: r.top + "px",
                         width: r.width + "px",
@@ -244,7 +246,6 @@ angular.module("dragdrop", [])
                     // before the current dragElem
                     _ghost = _createGhost(_dragElement.elem);
                     _ghostContainer = dragContainer;
-                    dragContainer.elem[0].insertBefore(_ghost[0], _dragElement.elem[0]);
 
                     // Now we can safely remove the drag element from the drag container
                     _removeElemFromContainer(dragContainer, _dragElement);
@@ -266,6 +267,11 @@ angular.module("dragdrop", [])
                     });
 
                     if(hoverContainer) {
+                        if(!hoverContainer.dropAllowed) {
+                            _dragElem.css("cursor", "no-drop");
+                            return;
+                        }
+                        _dragElem.css("cursor", "move");
                         // The mouse is currently on a container.
                         _ghostContainer = hoverContainer;
                         // Get the element in this container with the smallest distance to the mouse
@@ -310,6 +316,8 @@ angular.module("dragdrop", [])
                         } else {
                             hoverContainer.elem.append(_ghost);
                         }
+                    } else {
+                        _dragElem.css("cursor", "no-drop");
                     }
                 };
 
@@ -351,10 +359,11 @@ angular.module("dragdrop", [])
                 this.elem = elem;
             };
 
-            Drag.Container = function(elem, data, horizontal) {
+            Drag.Container = function(elem, data, horizontal, dropAllowed) {
                 this.elem = elem;
                 this.data = data;
                 this.horizontal = _.isBoolean(horizontal) ? horizontal : dragdropConfig.horizontal;
+                this.dropAllowed = _.isBoolean(dropAllowed) ? dropAllowed : dragdropConfig.dropAllowed;
             };
 
             Drag.Element = function(elem, data) {
@@ -438,7 +447,8 @@ angular.module("dragdrop", [])
             scope: {
                 type: "@dragContainer",
                 data: "=containerData",
-                horizontal: "@dragHorizontal"
+                horizontal: "=?dragHorizontal",
+                dropAllowed: "=?"
             },
             controller: function($scope) {
                 this.startDrag = function(startCoordsMouse, dragElt) {
@@ -447,12 +457,7 @@ angular.module("dragdrop", [])
             },
             link: function(scope, elem) {
                 var drag = dragStore(scope.type);
-                var dragContainer;
-                if(_.isUndefined(scope.horizontal)) {
-                    dragContainer = new Drag.Container(elem, scope.data);
-                } else {
-                    dragContainer = new Drag.Container(elem, scope.data, scope.horizontal === "true");
-                }
+                var dragContainer = new Drag.Container(elem, scope.data, scope.horizontal, scope.dropAllowed);
                 var unregister = drag.registerContainer(dragContainer);
 
                 scope.startDrag = function(startCoordsMouse, dragElt) {
