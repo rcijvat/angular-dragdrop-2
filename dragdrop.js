@@ -272,7 +272,7 @@ angular.module("dragdrop", [])
                         var closestElt = _(self.elements).filter(function(el) {
                             // only include elements inside the mouseover container
                             return hoverContainer.elem[0].contains(el.elem[0]);
-                        }).min(function(elt) {
+                        }).minBy(function(elt) {
                             // return container with minimum distance
                             return distance(elt.elem, mouseCoords);
                         });
